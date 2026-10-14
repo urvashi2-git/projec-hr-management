@@ -1,0 +1,14 @@
+const express = require("express");
+const { addEmployee, getAllEmployee, getEmployeeById, updateEmployee, deleteEmployee } = require("../controllers/employeeController");
+const { authMiddleware, authorizedRole } = require("../middleware/authMiddleware");
+
+const router = express.Router();
+
+
+router.post("/", authMiddleware, authorizedRole("HR"), addEmployee);
+router.get("/", authMiddleware, authorizedRole("HR"), getAllEmployee);
+router.get("/:id", authMiddleware, authorizedRole("HR"), getEmployeeById);
+router.put("/:id", authMiddleware, authorizedRole("HR"), updateEmployee);
+router.delete("/:id", authMiddleware, authorizedRole("HR"), deleteEmployee);
+
+module.exports = router;

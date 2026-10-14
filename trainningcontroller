@@ -1,0 +1,88 @@
+const Training = require("../models/Training");
+
+const createTraining = async (req, res) => {
+  try {
+    const { title, description, date, trainer, assignedTo } = req.body;
+     
+    const training = await Training.create({
+      title,
+      description,
+      date,
+      trainer,
+      assignedTo,
+      createdBy: req.user._id,
+    });
+    
+    res.status(201).json({
+      message: "Training created successfully",
+      training,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+    
+const getAllTrainings = async (req, res) => {
+  try {
+    const trainings = await Training.find()
+      .populate("createdBy", "name role")
+      .populate("assignedTo", "name email role")
+      .sort({ date: -1 });
+
+    res.status(200).json(trainings);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+const getMyTrainings = async (req, res) => {
+  try {
+    const trainings = await Training.find({ assignedTo: req.user._id }).sort({
+      date: -1,
+    });
+    res.status(200).json(trainings);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+const updateTraining = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const training = await Training.findByIdAndUpdate(id, updates, { new: true });
+    if (!training) return res.status(404).json({ message: "Training not found" });
+    
+    res.status(200).json({
+      message: "Training updated successfully",
+      training,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+const deleteTraining = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const training = await Training.findByIdAndDelete(id);
+    if (!training) return res.status(404).json({ message: "Training not found" });
+
+    res.status(200).json({ message: "Training deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = {
+    createTraining,
+    getAllTrainings,
+    getMyTrainings,
+    updateTraining,
+    deleteTraining
+}

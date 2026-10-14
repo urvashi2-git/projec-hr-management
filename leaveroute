@@ -1,0 +1,14 @@
+const express = require("express");
+const { authorizedRole, authMiddleware } = require("../middleware/authMiddleware");
+const { applyLeave, getMyLeaves, getAllLeaves, updateLeaveStatus} = require("../controllers/leaveController");
+
+const router = express.Router();
+
+
+router.post("/apply", authMiddleware, authorizedRole("Employee"), applyLeave);
+// router.post("/apply", applyLeave);
+router.get("/my", authMiddleware, authorizedRole("Employee"), getMyLeaves);
+router.get("/", authMiddleware, authorizedRole("HR", "Manager"), getAllLeaves);
+router.put("/:id/status", authMiddleware, authorizedRole("HR", "Manager"), updateLeaveStatus);
+
+module.exports = router;

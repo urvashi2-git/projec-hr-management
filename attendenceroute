@@ -1,0 +1,12 @@
+const express = require("express");
+const {markAttendance, getMyAttendance, getAllAttendance} = require("../controllers/attendanceController");
+const { authMiddleware, authorizedRole } = require("../middleware/authMiddleware");
+
+const router = express.Router();
+
+
+router.post("/", authMiddleware, authorizedRole("Employee"), markAttendance);
+router.get("/my", authMiddleware, authorizedRole("Employee"), getMyAttendance);
+router.get("/", authMiddleware, authorizedRole("HR"), getAllAttendance);
+
+module.exports = router;

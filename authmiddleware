@@ -1,0 +1,49 @@
+const jwt = require("jsonwebtoken");
+const User = require("../models/User"); 
+
+const authMiddleware = async (req, res, next) => {
+  try {
+    const authorizationHeader = req.headers["authorization"];
+    if (!authorizationHeader) {
+      return res
+        .status(401)
+        .send({ message: "Authorization header missing", success: false });
+    }
+
+    const token = authorizationHeader.split(" ")[1];
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+      if (err) {
+        return res
+          .status(401)
+          .send({ message: "Token is not valid", success: false });
+      }
+
+      const user = await User.findById(decoded.id);
+      if (!user) {
+        return res.status(404).send({ message: "User not found", success: false });
+      }
+
+      req.user = user; 
+      req.body = req.body || {};
+      req.body.userId = user._id; 
+      next();
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: "Internal server error", success: false });
+  }
+};
+
+const authorizedRole = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    next();
+  };
+};
+
+module.exports = {
+  authMiddleware,
+  authorizedRole,
+};

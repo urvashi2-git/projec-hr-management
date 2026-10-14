@@ -1,0 +1,76 @@
+const Announcement = require("../models/Announcement");
+
+const createAnnouncement = async (req, res) => {
+  try {
+    const { title, message, targetAudience } = req.body;
+
+    const announcement = await Announcement.create({
+      title,
+      message,
+      targetAudience,
+      createdBy: req.user._id,
+    });
+
+    res.status(201).json({
+      message: "Announcement created successfully",
+      announcement,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getAllAnnouncements = async (req, res) => {
+  try {
+    const announcements = await Announcement.find()
+      .populate("createdBy", "name role")
+      .sort({ createdAt: -1 });
+    res.status(200).json(announcements);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const updateAnnouncement = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, message, targetAudience } = req.body;
+
+    const announcement = await Announcement.findByIdAndUpdate(
+      id,
+      { title, message, targetAudience },
+      { new: true }
+    );
+
+    if (!announcement)
+      return res.status(404).json({ message: "Announcement not found" });
+
+    res.status(200).json({
+      message: "Announcement updated successfully",
+      announcement,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const deleteAnnouncement = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const announcement = await Announcement.findByIdAndDelete(id);
+
+    if (!announcement)
+      return res.status(404).json({ message: "Announcement not found" });
+
+    res.status(200).json({ message: "Announcement deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = {
+    createAnnouncement,
+    getAllAnnouncements,
+    updateAnnouncement,
+    deleteAnnouncement
+}

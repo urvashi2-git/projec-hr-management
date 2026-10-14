@@ -1,0 +1,14 @@
+const express = require("express");
+const {createTraining, updateTraining, deleteTraining, getAllTrainings, getMyTrainings} = require("../controllers/trainingController");
+const { authMiddleware, authorizedRole } = require("../middleware/authMiddleware")
+
+const router = express.Router();
+
+
+router.post("/", authMiddleware, authorizedRole("Manager"), createTraining);
+router.put("/:id", authMiddleware, authorizedRole("Manager"), updateTraining);
+router.delete("/:id", authMiddleware, authorizedRole("Manager"), deleteTraining);
+router.get("/", authMiddleware, authorizedRole("HR", "Manager", "Employee" ), getAllTrainings);
+router.get("/my", authMiddleware, authorizedRole("Employee"), getMyTrainings);
+
+module.exports = router;

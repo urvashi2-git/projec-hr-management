@@ -1,0 +1,73 @@
+const Attendance = require("../models/Attendance");
+
+
+const markAttendance = async (req, res) => {
+    try {
+        const { type } = req.body;
+        const today = new Date().toISOString().split("T")[0];
+
+        let attendance = await Attendance.findOne({
+            user: req.user._id,
+            date: today,
+        });
+        
+        if (type === "checkin") {
+            if (attendance)
+                return res.status(400).json({ message: "Already checked in today" });
+        
+            const checkInTime = new Date().toLocaleTimeString();
+            attendance = await Attendance.create({
+                user: req.user._id,
+                date: today,
+                checkInTime,
+                status: "Present",
+            });
+
+            return res.status(201).json({ message: "Check-in successful", attendance });
+        }
+
+        if (type === "checkout") {
+            if (!attendance)
+                return res.status(404).json({ message: "No check-in found for today" });
+
+            if (attendance.checkOutTime)
+                return res.status(400).json({ message: "Already checked out" });
+
+            attendance.checkOutTime = new Date().toLocaleTimeString();
+            await attendance.save();
+
+            return res.status(200).json({ message: "Check-out successful", attendance });
+        }
+        res.status(400).json({ message: "Invalid type" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const getAllAttendance = async (req, res) => {
+    try {
+        const attendanceRecords = await Attendance.find()
+            .populate("user", "name email role")
+            .sort({ date: -1 });
+        res.status(200).json(attendanceRecords);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const getMyAttendance = async (req, res) => {
+    try {
+        const myAttendance = await Attendance.find({ user: req.user._id }).sort({
+            date: -1,
+        });
+        res.status(200).json(myAttendance);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = {
+    markAttendance,
+    getAllAttendance,
+    getMyAttendance,
+}

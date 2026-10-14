@@ -1,0 +1,69 @@
+const Leave = require("../models/Leave");
+
+
+const applyLeave = async (req, res) => {
+  try {
+    const { startDate, endDate, reason } = req.body;
+    const leave = await Leave.create({
+      user: req.user._id,
+      startDate,
+      endDate,
+      reason,
+    });
+    res.status(201).json({ message: "Leave request submitted", leave });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+const getAllLeaves = async (req, res) => {
+  try {
+    const leaves = await Leave.find()
+      .populate("user", "name email role")
+      .sort({ createdAt: -1 });
+    res.status(200).json(leaves);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+const getMyLeaves = async (req, res) => {
+  try {
+    const leaves = await Leave.find({ user: req.user._id }).sort({ createdAt: -1 });
+    res.status(200).json(leaves);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+const updateLeaveStatus = async (req, res) => {
+  try {
+    const { status } = req.body; 
+    const leave = await Leave.findById(req.params.id);
+
+    if (!leave) return res.status(404).json({ message: "Leave not found" });
+
+    if (!["HR", "Manager"].includes(req.user.role)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    
+    leave.status = status;
+    leave.approverRole = req.user.role;
+    await leave.save();
+    
+    res.status(200).json({ message: `Leave ${status} successfully`, leave });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+module.exports = {
+  applyLeave,
+  getAllLeaves,
+  getMyLeaves,
+  updateLeaveStatus
+}
